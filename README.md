@@ -1,15 +1,67 @@
-## Question
-Can we use multimodal data—(1) egocentric **video** from a body-worn camera and (2) synchronized ambient **audio**—to accurately detect whether a short clip corresponds to a fall vs non-fall event, using only a subset of 2,000 clips from the EGOFALLS dataset?
+## Step 1: Question
+Can we use multimodal data—(1) egocentric **video** from a body-worn camera and (2) synchronized ambient **audio**—to accurately detect whether a short clip corresponds to a fall vs non-fall event, using only a small subset of **375 clips** from the EGOFALLS dataset?
 
 
-## Dataset
+## Step 2: Dataset and EDA
+### Dataset
+EGOFALLS is an egocentric fall-detection dataset collected in Groningen, Netherlands (2018–2022). It includes 14 subjects (age 20–60) performing scripted activities with body-worn RGB cameras at the neck and waist, across indoor and outdoor environments. Overall there are 10,948 clips (7,177 non-falls, 3,771 falls). Clips are organized on disk by subject, environment (indoor/outdoor), activity type (falls vs non-falls), and more fine-grained categories such as "front_falls/Neck" or "Bending/Waist" in a nested folder tree.
+
+Each Folder contains:
+1) **Label**: A binary indicator:
+    - **fall** – scripted falls such as front, lateral, backside, or syncopal falls.
+    - **non-fall** – daily activities such as bending, standing, sitting, lying, stumbling, and walking.
+
+2) `.MOV` file that contains a video stream and audio stream in the same container with no way to no separate .wav/.mp3 audio files
+    - **Video**: RGB footage from a body-worn camera, capturing first-person motion (e.g., walking, sitting down, simulated falls).
+    - **Audio**: Synchronized ambient sound, including footsteps, impact sounds, voices, and background noise.
+
+### Basic EDA
+Each folder name show a rich set of **non-fall** activities (bending, lying, rising, sitting, standing, walking, stumbling) and several **fall** types (backward, frontal, lateral, syncopal). This suggests the dataset covers a range of realistic motion patterns and potential confounders for a fall detector.
+
+
+## Step 3: Missing Data, Outliers, Metadata, Manipulations
+### Missingness
+In terms of missing data files were present in some paths in the directory tree referenced video files that were not present after unzip or transfer (e.g., specific numbered clips like Neck_6.MOV). Attempting to load these would raise a FileNotFoundError.
+
+### Outliers
+In terms of outliers, many of the clip `.MOV`s varied by length and some clips behave like outliers from a modeling perspective—for example, non-fall activities such as stumbling, dropping an object, or sitting down abruptly, which can look or sound very similar to a true fall, as well as clips with unusually noisy background audio. I did not remove these clips because clinically they represent exactly the kinds of hard negatives that trigger false alarms in a real system.
+
+During  metadata preparation, I filtered out any paths that did not correspond to an existing file. As a result, the final metadata only includes clips.
+
+### MetaData
+
+
+### Final Data Manipualtion
+In terms of extracted clip-level metadata, an unzipping of the files and label balance (raw subset) included 894 clips total with 719 labeled as non-fall and 175 labeled as fall. **Due to large storage and memory contraints** of `.MOV` and `.mp4` files, this project consisted of a small dataset of 350 samples.
+ - 175 falls
+ - 175 non-falls 
+
+This 350-clip balanced set is what the models are actually trained and evaluated on. It is then split, with a fixed random seed, into:
+ - Train: 244 clips (~70%)
+ - Validation: 52 clips (~15%)
+ - Test: 54 clips (~15%)
+
+
+### Step 4 Model
 
 
 
-Transformations...labeling...annotations
 
 
 
+
+## Step 5: Evalaute Model
+
+### Step 5A: Performance
+
+
+### Step 5B: Interpretibility
+
+
+## Step 6: Production Model Future Steps
+
+
+## Step 7: Retrain and iterate on the model
 
 ## Metrics
 This project defines each **clip** as a short, synchronized audio–video segment from the EGOFALLS dataset, recorded from an egocentric (body-worn) camera with ambient audio and labeled as either *fall* or *non-fall*. All metrics below are computed over these clips, treating **fall** as the positive class.
