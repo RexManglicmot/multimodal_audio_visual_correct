@@ -1,0 +1,18 @@
+torch
+torchvision
+torchaudio
+av
+
+pandas
+numpy
+scikit-learn
+
+tqdm
+matplotlib
+seaborn
+
+pyyaml
+
+# Optional but often handy for debugging / extra processing:
+opencv-python
+ffmpeg-python
