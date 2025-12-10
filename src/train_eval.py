@@ -353,4 +353,25 @@ if __name__ == "__main__":
 start:251pm
 end
 
+On Vast now
+python -m src.train_eval --config configs/config.yaml --mode fusion
+start:534pm
+end 7pm 
+
+Test | loss=0.1365 acc=0.944 F1(fall)=0.945 recall(fall)=1.000 precision(fall)=0.897           Confusion matrix counts (true rows, pred cols): TP=26.0, FP=3.0, FN=0.0, TN=25.0
+
+python -m src.train_eval --config configs/config.yaml --mode video_only
+start: 7:02pm
+end:829
+
+Test | loss=0.4264 acc=0.870 F1(fall)=0.873 recall(fall)=0.923 precision(fall)=0.828
+Confusion matrix counts (true rows, pred cols): TP=24.0, FP=5.0, FN=2.0, TN=23.0
+
+python -m src.train_eval --config configs/config.yaml --mode audio_only
+start:830pm
+end:1003
+
+Test | loss=0.4803 acc=0.722 F1(fall)=0.776 recall(fall)=1.000 precision(fall)=0.634
+Confusion matrix counts (true rows, pred cols): TP=26.0, FP=15.0, FN=0.0, TN=13.0
+
 """

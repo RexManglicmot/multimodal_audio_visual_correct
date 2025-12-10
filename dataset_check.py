@@ -12,12 +12,12 @@ print(audio_feat.shape) # torch.Size([64])           (given n_mels=64)
 print(label)            # 0 or 1
 
 """
-Yesss 🎉 that output is exactly what we want:
+Yesss, that output is exactly what we want:
 
-350 samples ✅
+350 samples 
 
-Frame shape: torch.Size([3, 224, 224]) ✅
+Frame shape: torch.Size([3, 224, 224]) 
 
-Audio feature: torch.Size([64]) ✅
+Audio feature: torch.Size([64]) 
 
 """
