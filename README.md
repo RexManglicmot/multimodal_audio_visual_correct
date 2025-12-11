@@ -6,6 +6,8 @@ Can we use multimodal data—(1) egocentric **video** from a body-worn camera an
 ### Dataset
 **EGOFALLS** is an egocentric fall-detection dataset collected in Groningen, Netherlands (2018–2022). It includes 14 subjects (age 20–60) performing scripted activities with body-worn RGB cameras at the neck and waist, across indoor and outdoor environments. Overall there are 10,948 clips (7,177 non-falls, 3,771 falls). Clips are organized on disk by subject, environment (indoor/outdoor), activity type (falls vs non-falls), and more fine-grained categories such as "front_falls/Neck" or "Bending/Waist" in a nested folder tree.
 
+![tree_structure](tree_structure.png)
+
 Each Folder is named as a:
 1) **Label**, binary indicator
     - **fall** – scripted falls such as front, lateral, backside, or syncopal falls.
@@ -53,7 +55,7 @@ All models follow the same pattern:
 1. **Inputs per clip**
 
    * **Video:** one middle RGB frame, resized to **3×224×224**, ImageNet-normalized.
-   * **Audio:** up to **4 secons** of audio → **64-bin log-mel** vector (64-D).
+   * **Audio:** up to **4 seconds** of audio → **64-bin log-mel** vector (64-D).
 
 2. **Encoders**
 
@@ -65,7 +67,7 @@ All models follow the same pattern:
    * **Fusion model:** concatenate 128-D video + 64-D audio → **192-D fused feature**, then a small MLP → **2 logits** (non-fall, fall).
    * **Video-only / audio-only:** use just one encoder (128-D or 64-D) with a similar small MLP → 2 logits.
 
-All variants are trained with the **same loss** (cross-entropy), same optimizer (Adam), and the same train/val/test splits; the only difference between models is which encoders are turned on (video, audio, or both).
+All variants are trained with the **same loss** (cross-entropy), **same optimizer (Adam)**, and the **same train/val/test splits**; the only difference between models is which encoders are turned on (video, audio, or both).
 
 
 **Fusion Model**
