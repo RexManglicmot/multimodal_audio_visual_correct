@@ -43,25 +43,17 @@ This 350-clip balanced set is what the models are actually trained and evaluated
  - Validation: 52 clips (~15%)
  - Test: 54 clips (~15%)
 
-### Step 4 Models
+## Step 4 Models
 There are 3 models(fusion, video-only, audio-only) and follow the same basic recipe:
 
 > Take a clip → turn it into a video feature and/or audio feature → feed through a small classifier to predict non-fall vs fall.
 
 All models follow the same pattern:
 
-Totally, here’s a very short version you can use.
-
----
-
-### 4.1 Underlying Architecture
-
-All models follow the same pattern:
-
 1. **Inputs per clip**
 
    * **Video:** one middle RGB frame, resized to **3×224×224**, ImageNet-normalized.
-   * **Audio:** up to **4 s** of audio → **64-bin log-mel** vector (64-D).
+   * **Audio:** up to **4 secons** of audio → **64-bin log-mel** vector (64-D).
 
 2. **Encoders**
 
@@ -76,7 +68,7 @@ All models follow the same pattern:
 All variants are trained with the **same loss** (cross-entropy), same optimizer (Adam), and the same train/val/test splits; the only difference between models is which encoders are turned on (video, audio, or both).
 
 
-Fusion Model
+**Fusion Model**
 ```text
 
            ┌─────────────────────┐
@@ -128,7 +120,7 @@ Fusion Model
 
 ```
 
-Video-Only Model
+**Video-Only Model**
 ``` text
            ┌─────────────────────┐
            │  EGOFALLS clip      │
@@ -161,7 +153,7 @@ Video-Only Model
             └──────────────────┘
 ```
 
-Sound-Only Model
+**Sound-Only Model**
 ```text
            ┌─────────────────────┐
            │  EGOFALLS clip      │
@@ -199,6 +191,50 @@ Sound-Only Model
 
 
 ## Step 6: Production Model Future Steps
+
+If this were deployed on **wearable**, there are 3 things matter beyond accuracy:
+
+1. **Edge-device constraints.**
+
+   * Limited compute, battery, and network.
+   * My current design is already lightweight:
+
+     * Single 224×224 frame + 4-second audio window per clip.
+     * Frozen ResNet18 backbone (no backprop in production).
+
+   * In deployment, the model would:
+
+     * Continuously buffer a few seconds of audio–video,
+     * Run inference every few seconds on-device,
+     * Send a compact alert (timestamp + score + screenshot) to the nurse dashboard when a threshold is exceeded.
+
+
+
+---
+
+## Step 7: Retrain and Iterate on the Model
+
+Once deployed, the model shouldn’t be static and there are several ways to iterate the model:
+
+1. **Continuous data collection & labeling.**
+
+   * Every alert + a sample of non-alert clips can be stored and periodically reviewed.
+   * Mis-labeled events (false alarms, missed falls) become new training examples.
+
+2. **Retraining schedule.**
+
+   * Offline, say **monthly or quarterly**, we can:
+
+     * Merge new labeled clips with the existing training set and Re-run training and compare metrics to the previous model.
+
+3. **Future Integration with clinical workflow.**
+
+   * Fall alerts could be logged in the EMR, timestamped and linked to room and patient.
+   * Clinicians could review short, anonymized clips for quality assurance and label corrections (useful for retraining).
+
+---
+
+
 
 
 ## Step 7: Retrain and iterate on the model
@@ -246,4 +282,12 @@ The experiments show that **combining egocentric video with ambient audio clearl
 - Build a small evaluation + visualization dashboard (e.g., in Streamlit) that lets you browse clips, predicted labels, confidence scores, and confusion cases, making it easier to do qualitative error analysis and communicate results to non-technical stakeholders.
 
 ### Build Order
-config.yaml ->
+1. **`configs/config.yaml`** – centralizes all hyper-parameters, paths, and modes (fusion / video_only / audio_only).
+2. **`src/build_annotations_from_folders.py`** – walks the EGOFALLS folders, creates `annotations.csv` with `path` + `label`.
+3. **`src/prepare_metadata.py`** – builds `metadata_full.csv` (894 rows) and the balanced subset `metadata_2k.csv` (350 clips).
+4. **`src/dataset.py`** – defines `EgoFallsDataset` that returns `(video_frame, audio_features, label)` for each clip.
+5. **`src/model.py`** – implements the fusion, video-only, and audio-only networks.
+6. **`src/train_eval.py`** – trains the chosen mode (fusion / video_only / audio_only), saves best checkpoints and split indices.
+7. **`src/test.py`** – evaluates a trained model on the held-out test set and writes `metrics_test_<mode>.json`.
+8. **`src/viz_results.py`** – aggregates metrics into a summary table and generates F1 bar chart, Recall vs Precision bars, and ROC / PR curves.
+
