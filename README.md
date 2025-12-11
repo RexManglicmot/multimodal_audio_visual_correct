@@ -182,7 +182,7 @@ All variants are trained with the **same loss** (cross-entropy), same optimizer 
 
 ## Step 5: Evalute Model
 
-### Metrics Definitions
+### Classic Metrics Definitions
 This project defines each **clip** as a short, synchronized audio–video segment from the EGOFALLS dataset, recorded from an egocentric (body-worn) camera with ambient audio and labeled as either *fall* or *non-fall*. All metrics below are computed over these clips, treating **fall** as the positive class.
 
 * **Loss** – Training objective the model minimizes; lower loss means predictions match the ground-truth labels better.
@@ -194,9 +194,38 @@ This project defines each **clip** as a short, synchronized audio–video segmen
 * **PR AUC (Fall)** – Area under the precision–recall curve for the fall class; especially informative when falls are relatively rare.
 * **TP / FP / FN / TN** – Confusion matrix counts: true positives (correct falls), false positives (non-falls flagged as falls), false negatives (missed falls), and true negatives (correct non-falls).
 
+### Which Metrics Matter and Why?
 
+Yeah, fair — that paragraph was still too “textbook-y.” Let’s make it **very explicit**: *what do we actually care about in the hospital, and which metric represents that*?
 
+Here’s a better version you can paste under **“Which metrics matter and why?”**:
 
+---
+
+### Which metrics matter and why?
+In a real hospital deployment, the goal is **not** “get the highest accuracy number.” The goal is:
+
+1. **Don’t miss real falls** (patient safety).
+2. **Don’t spam staff with useless alerts** (avoid alarm fatigue).
+
+Those two goals map almost directly to:
+
+* **Recall (Fall)** – *Of all true falls, how many did we catch?*
+
+  * This matters because a missed fall (false negative) can mean an unwitnessed injury or delayed care.
+  * Clinically, **high recall is non-negotiable**: we’d rather slightly over-alert than miss a patient on the floor.
+
+* **Precision (Fall)** – *Of all the clips we flagged as falls, how many were really falls?*
+
+  * This matters because every false positive is an unnecessary alert.
+  * If precision is low, nurses get bombarded with alarms and start ignoring them (**alarm fatigue**).
+
+Because we care about **both** “catch almost all falls” (recall) **and** “don’t cry wolf all the time” (precision), I use:
+
+* **F1 (Fall)** as a **single summary metric** – it is only high when **both precision and recall are high**, so it reflects a good trade-off between safety and alarm burden.
+* **PR AUC (Fall)** instead of just ROC AUC – PR AUC directly measures how **precision and recall behave across thresholds**, which is more meaningful when falls are relatively rare. ROC AUC can look good even for models that still generate many useless alerts; PR AUC penalizes that more honestly.
+
+In contrast, **accuracy** can be very misleading here: if falls are rare, a model that almost always predicts “non-fall” can have high accuracy while being **clinically useless**. That’s why, for this project, I treat **F1 (Fall), recall, precision, and PR AUC** as the metrics that actually matter for patient care.
 
 ### Performance
 | Mode       | Loss  | Accuracy | F1 (Fall) | Recall (Fall) | Precision (Fall) | ROC AUC (Fall) | TP | FP | FN | TN |
@@ -218,17 +247,35 @@ The Fall vs Non-fall ROC curves show that the fusion model delivers the most rob
 The Fall vs Non-fall PR curves highlight that the fusion model not only detects falls but does so with consistently high precision, achieving a PR AUC of 0.97 and maintaining strong precision even at high recall. The video-only model is noticeably weaker (PR AUC ≈ 0.76), and the audio-only model struggles the most (PR AUC ≈ 0.57), confirming that multimodal fusion is especially valuable when we care about catching falls without flooding the system with false alarms.
 
 
-### Interpretibility
+### Interpretibility -- What the Model Means in Practice
+Focusing on the best model, the Fusion model,
 
+On the held-out 54-clip test set, the **fusion model** produced:
 
+* **TP = 26** – true falls correctly flagged
+* **FP = 3** – non-falls incorrectly flagged as falls
+* **FN = 0** – falls missed
+* **TN = 25** – non-falls correctly ignored
 
+In plain language, that means:
 
+* When the system **fires an alert**, about **26 out of 29 alerts are real falls**, and about **3 out of 29 are false alarms**.
+* On this test set, the model **did not miss any falls** (recall = 1.0), which is exactly what you want for patient safety.
 
-## Step 6: Production Model Future Steps
+Clinically, this trade-off matters because:
+
+* **Missed falls (FN)** are the worst outcome: a patient may be on the floor without help, with risk of head injury, fracture, or delayed treatment.
+* **False positives (FP)** drive **alarm fatigue**: if the system cries wolf too often, staff start ignoring alerts, which eventually undermines the whole point of monitoring.
+
+This fusion model is tuned toward **“safety first”**: it prioritizes **very high recall** (catch every fall in the test set) while keeping the number of false alarms relatively modest. If you scale this behavior up, you can think of it roughly as:
+
+> “For every ~10 fall alerts, about 9 would be real falls and ~1 would be a false alarm.”
+
+## Step 6: Future Steps for Production Models
 
 If this system were deployed on a wearable, accuracy wouldn’t be the only concern, **edge constraints** suddenly matter a lot. Current devices have limited compute, battery, and network bandwidth, so the model has to be intentionally lightweight. In this design, each decision uses just a single 224×224 frame and a 4-second audio window, with a frozen ResNet18 backbone so there’s no heavy backprop or large updates happening on-device. In practice, the wearable would continuously buffer a few seconds of audio–video, run inference periodically (e.g., every few seconds), and only transmit a small alert payload—a timestamp, risk score, and possibly a representative frame—to the nurse dashboard when a risk threshold is crossed, keeping both computation and communication costs low.
 
-## Step 7: Retrain and Iterate on the Model
+## Step 7: Retrain and Iterate on the ModelS
 
 Once deployed, the model shouldn’t be static and there are several ways to iterate the model:
 
