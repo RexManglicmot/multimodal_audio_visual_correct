@@ -43,8 +43,8 @@ This 350-clip balanced set is what the models are actually trained and evaluated
  - Validation: 52 clips (~15%)
  - Test: 54 clips (~15%)
 
-## Step 4 Models
-There are 3 models(fusion, video-only, audio-only) and follow the same basic recipe:
+## Step 4: Models
+There are 3 models (fusion, video-only, audio-only) and follow the same basic recipe:
 
 > Take a clip → turn it into a video feature and/or audio feature → feed through a small classifier to predict non-fall vs fall.
 
@@ -194,14 +194,6 @@ This project defines each **clip** as a short, synchronized audio–video segmen
 * **PR AUC (Fall)** – Area under the precision–recall curve for the fall class; especially informative when falls are relatively rare.
 * **TP / FP / FN / TN** – Confusion matrix counts: true positives (correct falls), false positives (non-falls flagged as falls), false negatives (missed falls), and true negatives (correct non-falls).
 
-### Which Metrics Matter and Why?
-
-Yeah, fair — that paragraph was still too “textbook-y.” Let’s make it **very explicit**: *what do we actually care about in the hospital, and which metric represents that*?
-
-Here’s a better version you can paste under **“Which metrics matter and why?”**:
-
----
-
 ### Which metrics matter and why?
 In a real hospital deployment, the goal is **not** “get the highest accuracy number.” The goal is:
 
@@ -248,9 +240,7 @@ The Fall vs Non-fall PR curves highlight that the fusion model not only detects 
 
 
 ### Interpretibility -- What the Model Means in Practice
-Focusing on the best model, the Fusion model,
-
-On the held-out 54-clip test set, the **fusion model** produced:
+Focusing on the best model, the Fusion model, on the held-out 54-clip test set, the **fusion model** produced:
 
 * **TP = 26** – true falls correctly flagged
 * **FP = 3** – non-falls incorrectly flagged as falls
