@@ -6,12 +6,12 @@ Can we use multimodal data—(1) egocentric **video** from a body-worn camera an
 ### Dataset
 **EGOFALLS** is an egocentric fall-detection dataset collected in Groningen, Netherlands (2018–2022). It includes 14 subjects (age 20–60) performing scripted activities with body-worn RGB cameras at the neck and waist, across indoor and outdoor environments. Overall there are 10,948 clips (7,177 non-falls, 3,771 falls). Clips are organized on disk by subject, environment (indoor/outdoor), activity type (falls vs non-falls), and more fine-grained categories such as "front_falls/Neck" or "Bending/Waist" in a nested folder tree.
 
-Each Folder contains:
+Each Folder is named as a:
 1) **Label**, binary indicator
     - **fall** – scripted falls such as front, lateral, backside, or syncopal falls.
     - **non-fall** – daily activities such as bending, standing, sitting, lying, stumbling, and walking.
 
-2) and a `.MOV` file that contains a video stream and audio stream in the same container with no way to no separate .wav/.mp3 audio files
+2) and have `.MOV` file that contains a video stream and audio stream in the same container with no way to no separate .wav/.mp3 audio files
     - **Video**: RGB footage from a body-worn camera, capturing first-person motion (e.g., walking, sitting down, simulated falls).
     - **Audio**: Synchronized ambient sound, including footsteps, impact sounds, voices, and background noise.
 
