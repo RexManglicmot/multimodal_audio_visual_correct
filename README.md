@@ -21,10 +21,10 @@ Each folder name show a rich set of **non-fall** activities (bending, lying, ris
 
 ## Step 3: Missing Data, Outliers, Metadata, Manipulations
 ### Missingness
-In terms of missing data, files are absent in some fodlers after unzipping (e.g., specific numbered clips like Neck_6.MOV). Attempting to load these raisea a `FileNotFoundError`.
+In terms of missing data, `.MOV`s are absent in some folders after unzipping (e.g., specific numbered clips like Neck_6.MOV) and as a result, attempting to load these raised a `FileNotFoundError`.
 
 ### Outliers
-In terms of outliers, many of the clip `.MOV`s varied by length and some clips behaved like outliers from a modeling perspective—for example, non-fall activities such as stumbling, dropping an object, or sitting down abruptly, which can look or sound very similar to a true fall, as well as clips with unusually noisy background audio. I did not remove these clips because clinically they represent exactly the kinds of hard negatives that trigger false alarms in a real system.
+In terms of outliers, many of the clip `.MOV`s varied by length and some clips behaved like outliers from a modeling perspective. For example, non-fall activities such as stumbling, dropping an object, or sitting down abruptly, which can look or sound very similar to a true fall, as well as clips with unusually noisy background audio. I did not remove these clips because clinically they represent exactly the kinds of hard negatives that trigger false alarms in a real system.
 
 During  metadata preparation, I filtered out any paths that did not correspond to an existing file. As a result, the final metadata only includes clips.
 
