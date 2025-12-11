@@ -43,11 +43,150 @@ This 350-clip balanced set is what the models are actually trained and evaluated
  - Validation: 52 clips (~15%)
  - Test: 54 clips (~15%)
 
-### Step 4 Model
+### Step 4 Models
+There are 3 models(fusion, video-only, audio-only) and follow the same basic recipe:
+
+> Take a clip → turn it into a video feature and/or audio feature → feed through a small classifier to predict non-fall vs fall.
+
+All models follow the same pattern:
+
+Totally, here’s a very short version you can use.
+
+---
+
+### 4.1 Underlying Architecture
+
+All models follow the same pattern:
+
+1. **Inputs per clip**
+
+   * **Video:** one middle RGB frame, resized to **3×224×224**, ImageNet-normalized.
+   * **Audio:** up to **4 s** of audio → **64-bin log-mel** vector (64-D).
+
+2. **Encoders**
+
+   * **Video encoder:** pretrained **ResNet18** (frozen), last layer removed → **512-D**, then a small head maps 512 → **128-D** (ReLU + dropout).
+   * **Audio encoder:** small MLP maps **64-D → 64-D** (ReLU + dropout).
+
+3. **Classifier / fusion**
+
+   * **Fusion model:** concatenate 128-D video + 64-D audio → **192-D fused feature**, then a small MLP → **2 logits** (non-fall, fall).
+   * **Video-only / audio-only:** use just one encoder (128-D or 64-D) with a similar small MLP → 2 logits.
+
+All variants are trained with the **same loss** (cross-entropy), same optimizer (Adam), and the same train/val/test splits; the only difference between models is which encoders are turned on (video, audio, or both).
 
 
+Fusion Model
+```text
 
+           ┌─────────────────────┐
+           │  EGOFALLS clip      │
+           │  (.MOV: video+audio)│
+           └─────────┬───────────┘
+                     │
+        ┌────────────┴─────────────┐
+        │                          │
+        ▼                          ▼
+┌──────────────────┐       ┌─────────────────────┐
+│  Middle RGB frame│       │  4s audio waveform │
+│  (3×224×224)     │       │  → log-mel (64-D)  │
+└────────┬─────────┘       └─────────┬──────────┘
+         │                           │
+         ▼                           ▼
+┌──────────────────┐       ┌─────────────────────┐
+│  ResNet18 (frozen│       │  Audio MLP          │
+│  backbone)       │       │  64 → 64, ReLU, DO │
+│  3×224×224→512-D │       │  → 64-D embedding  │
+└────────┬─────────┘       └─────────┬──────────┘
+         │                           │
+   512-D │                    64-D   │
+         ▼                           ▼
+┌──────────────────┐       ┌─────────────────────┐
+│  Linear 512→128  │       │ (already 64-D)      │
+│  ReLU, Dropout   │       └─────────────────────┘
+│  → 128-D video   │                |
+│    embedding     │                |
+└────────┬─────────┘                 |
+         │                           |
+         |                           |
+         ▼                            ▼ 
+         ┌───────────────────────────┐
+         │        128-D video        |
+         │         64-D audio        |
+         └───────┬───────────────────┘
+                 ▼
+        ┌─────────────────────────────┐
+        │   Concatenate [128+64]      │
+        │   → 192-D fused feature     │
+        └───────────┬────────────────┘
+                    ▼
+        ┌─────────────────────────────┐
+        │  Classifier MLP            │
+        │  192 → 128 → 2 logits      │
+        │  (non-fall, fall)          │
+        └─────────────────────────────┘
 
+```
+
+Video-Only Model
+``` text
+           ┌─────────────────────┐
+           │  EGOFALLS clip      │
+           │  (.MOV)             │
+           └─────────┬───────────┘
+                     │
+                     ▼
+            ┌──────────────────┐
+            │  Middle RGB frame│
+            │  (3×224×224)     │
+            └────────┬─────────┘
+                     ▼
+            ┌──────────────────┐
+            │ ResNet18 (frozen)│
+            │ 3×224×224→512-D  │
+            └────────┬─────────┘
+               512-D │
+                     ▼
+            ┌──────────────────┐
+            │ Linear 512→128   │
+            │ ReLU, Dropout    │
+            │ → 128-D video    │
+            │   embedding      │
+            └────────┬─────────┘
+                     ▼
+            ┌──────────────────┐
+            │ Classifier MLP   │
+            │ 128 → 128 → 2    │
+            │ (non-fall, fall) │
+            └──────────────────┘
+```
+
+Sound-Only Model
+```text
+           ┌─────────────────────┐
+           │  EGOFALLS clip      │
+           │  (.MOV)             │
+           └─────────┬───────────┘
+                     │
+                     ▼
+            ┌───────────────────────┐
+            │  4s audio waveform    │
+            │  → log-mel (64-D)     │
+            └──────────┬────────────┘
+                       ▼
+            ┌───────────────────────┐
+            │ Audio MLP             │
+            │ 64 → 64, ReLU, DO     │
+            │ → 64-D audio embedding│
+            └──────────┬────────────┘
+                       ▼
+            ┌───────────────────────┐
+            │ Classifier MLP        │
+            │ 64 → 64 → 2           │
+            │ (non-fall, fall)      │
+            └───────────────────────┘
+
+```
 
 
 
