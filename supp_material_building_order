@@ -1,0 +1,10 @@
+### Supplementary: Build Order
+1. **`configs/config.yaml`** – centralizes all hyper-parameters, paths, and modes (fusion / video_only / audio_only).
+2. **`src/build_annotations_from_folders.py`** – walks the EGOFALLS folders, creates `annotations.csv` with `path` + `label`.
+3. **`src/prepare_metadata.py`** – builds `metadata_full.csv` (894 rows) and the balanced subset `metadata_2k.csv` (350 clips).
+4. **`src/dataset.py`** – defines `EgoFallsDataset` that returns `(video_frame, audio_features, label)` for each clip.
+5. **`src/model.py`** – implements the fusion, video-only, and audio-only networks.
+6. **`src/train_eval.py`** – trains the chosen mode (fusion / video_only / audio_only), saves best checkpoints and split indices.
+7. **`src/test.py`** – evaluates a trained model on the held-out test set and writes `metrics_test_<mode>.json`.
+8. **`src/viz_results.py`** – aggregates metrics into a summary table and generates F1 bar chart, Recall vs Precision bars, and ROC / PR curves.
+

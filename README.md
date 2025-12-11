@@ -180,8 +180,6 @@ All variants are trained with the **same loss** (cross-entropy), same optimizer 
 
 ```
 
-
-
 ## Step 5: Evalute Model
 
 ### Metrics Definitions
@@ -230,9 +228,6 @@ The Fall vs Non-fall PR curves highlight that the fusion model not only detects 
 
 If this system were deployed on a wearable, accuracy wouldn’t be the only concern, **edge constraints** suddenly matter a lot. Current devices have limited compute, battery, and network bandwidth, so the model has to be intentionally lightweight. In this design, each decision uses just a single 224×224 frame and a 4-second audio window, with a frozen ResNet18 backbone so there’s no heavy backprop or large updates happening on-device. In practice, the wearable would continuously buffer a few seconds of audio–video, run inference periodically (e.g., every few seconds), and only transmit a small alert payload—a timestamp, risk score, and possibly a representative frame—to the nurse dashboard when a risk threshold is crossed, keeping both computation and communication costs low.
 
-
----
-
 ## Step 7: Retrain and Iterate on the Model
 
 Once deployed, the model shouldn’t be static and there are several ways to iterate the model:
@@ -252,15 +247,4 @@ Once deployed, the model shouldn’t be static and there are several ways to ite
 
    * Fall alerts could be logged in the EMR, timestamped and linked to room and patient.
    * Clinicians could review short, anonymized clips for quality assurance and label corrections (useful for retraining).
-
-
-### Supplementary: Build Order
-1. **`configs/config.yaml`** – centralizes all hyper-parameters, paths, and modes (fusion / video_only / audio_only).
-2. **`src/build_annotations_from_folders.py`** – walks the EGOFALLS folders, creates `annotations.csv` with `path` + `label`.
-3. **`src/prepare_metadata.py`** – builds `metadata_full.csv` (894 rows) and the balanced subset `metadata_2k.csv` (350 clips).
-4. **`src/dataset.py`** – defines `EgoFallsDataset` that returns `(video_frame, audio_features, label)` for each clip.
-5. **`src/model.py`** – implements the fusion, video-only, and audio-only networks.
-6. **`src/train_eval.py`** – trains the chosen mode (fusion / video_only / audio_only), saves best checkpoints and split indices.
-7. **`src/test.py`** – evaluates a trained model on the held-out test set and writes `metrics_test_<mode>.json`.
-8. **`src/viz_results.py`** – aggregates metrics into a summary table and generates F1 bar chart, Recall vs Precision bars, and ROC / PR curves.
 
